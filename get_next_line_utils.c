@@ -12,87 +12,80 @@
 
 #include "get_next_line.h"
 
-size_t	ft_strlen(const char *s)
+size_t	ft_strlen(const char *str)
 {
-	size_t	i;
+	size_t	len;
 
-	i = 0;
-	if (!s)
+	len = 0;
+	if (!str)
 		return (0);
-	while (s[i])
-		i++;
-	return (i);
+	while (str[len])
+		len++;
+	return (len);
 }
 
-char	*ft_strchr(const char *s, int c)
+char	*ft_strchr(const char *str, int c)
 {
-	int	i;
+	size_t	index;
 
-	if (!s)
+	if (!str)
 		return (NULL);
-	i = 0;
-	while (s[i])
+	index = 0;
+	while (str[index])
 	{
-		if (s[i] == (char)c)
-			return ((char *)&s[i]);
-		i++;
+		if (str[index] == (char)c)
+			return ((char *)&str[index]);
+		index++;
 	}
 	if ((char)c == '\0')
-		return ((char *)&s[i]);
+		return ((char *)&str[index]);
 	return (NULL);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(const char *first, const char *second)
 {
-	char	*str;
-	size_t	i;
-	size_t	j;
+	char	*joined;
+	size_t	first_len;
+	size_t	index;
 
-	str = malloc(ft_strlen(s1) + ft_strlen(s2) + 1);
+	first_len = ft_strlen(first);
+	joined = malloc(first_len + ft_strlen(second) + 1);
+	if (!joined)
+		return (NULL);
+	index = 0;
+	while (first && first[index])
+	{
+		joined[index] = first[index];
+		index++;
+	}
+	while (second && *second)
+		joined[index++] = *second++;
+	joined[index] = '\0';
+	return (joined);
+}
+
+char	*ft_substr(const char *str, size_t start, size_t len)
+{
+	char	*substring;
+	size_t	str_len;
+	size_t	index;
+
 	if (!str)
 		return (NULL);
-	i = 0;
-	j = 0;
-	while (s1 && s1[i])
-		str[j++] = s1[i++];
-	i = 0;
-	while (s2 && s2[i])
-		str[j++] = s2[i++];
-	str[j] = '\0';
-	return (str);
-}
-
-char	*ft_join_and_free(char *s1, char *s2)
-{
-	char	*new;
-
-	new = ft_strjoin(s1, s2);
-	free(s1);
-	return (new);
-}
-
-char	*ft_substr(char *s, unsigned int start, size_t len)
-{
-	char	*sub;
-	size_t	i;
-	size_t	size;
-
-	if (!s)
-		return (NULL);
-	size = ft_strlen(s);
-	if (start >= size)
+	str_len = ft_strlen(str);
+	if (start >= str_len)
 		len = 0;
-	else if (len > size - start)
-		len = size - start;
-	sub = malloc(len + 1);
-	if (!sub)
+	else if (len > str_len - start)
+		len = str_len - start;
+	substring = malloc(len + 1);
+	if (!substring)
 		return (NULL);
-	i = 0;
-	while (i < len)
+	index = 0;
+	while (index < len)
 	{
-		sub[i] = s[start + i];
-		i++;
+		substring[index] = str[start + index];
+		index++;
 	}
-	sub[i] = '\0';
-	return (sub);
+	substring[index] = '\0';
+	return (substring);
 }
