@@ -43,41 +43,93 @@ get_next_line.c get_next_line_utils.c main.c -o gnl
 Para ejecutar el programa de prueba:
 
 ```sh
-./gnl archivo.txt
+./gnl
 ```
+
+El ejemplo busca un archivo llamado `archivo.txt` en el directorio actual.
 
 El archivo `main.c` se utiliza únicamente para realizar pruebas y no forma
 parte de la entrega.
 
-## Algoritmo y justificación
+### Ejemplo de `main.c` para pruebas
 
-La función utiliza un puntero estático llamado `stash`. Este puntero conserva
-entre llamadas los caracteres que ya se han leído, pero que todavía no se han
-devuelto como parte de una línea.
+El siguiente programa abre un único archivo y llama repetidamente a
+`get_next_line` hasta que la función devuelve `NULL`:
 
-El algoritmo se divide en tres etapas:
+```c
+#include "get_next_line.h"
+#include <fcntl.h>
+#include <stdio.h>
 
-1. **Lectura y acumulación:** si `stash` todavía no contiene un salto de línea,
-   se leen bloques de hasta `BUFFER_SIZE` bytes. Cada bloque se añade a
-   `stash`. La lectura se detiene cuando aparece `\n`, se alcanza el final del
-   archivo o se produce un error.
-2. **Extracción de la línea:** se copia desde el comienzo de `stash` hasta el
-   primer `\n` incluido. Si el archivo termina sin `\n`, se copia todo el
-   contenido restante.
-3. **Actualización del estado:** la parte situada después de la línea devuelta
-   se guarda en un nuevo `stash` para la próxima llamada. Si no queda contenido,
-   se libera `stash` y pasa a valer `NULL`.
+int	main(void)
+{
+	int		fd;
+	char	*line;
 
-Se eligió una variable estática porque una variable local normal desaparecería
-al terminar cada llamada y se perderían los caracteres pendientes. La división
-en lectura, extracción y actualización permite que cada función tenga una
-responsabilidad clara y facilita comprobar la gestión de memoria.
+	fd = open("archivo.txt", O_RDONLY);
+	if (fd < 0)
+	{
+		printf("Error al abrir el archivo\n");
+		return (1);
+	}
+	line = get_next_line(fd);
+	while (line != NULL)
+	{
+		printf("%s", line);
+		free(line);
+		line = get_next_line(fd);
+	}
+	close(fd);
+	return (0);
+}
+```
 
-Las concatenaciones crean reservas nuevas porque `realloc` no está autorizado
-por el subject. Después de copiar el contenido se libera siempre la reserva
-anterior. Esta solución es directa y fácil de verificar, aunque concatenar
-repetidamente una línea muy larga puede implicar copiar varias veces el
-contenido acumulado.
+Este `main` utiliza `open`, `printf` y `close` únicamente para probar la
+función. Estas llamadas no forman parte de la implementación entregable de
+`get_next_line`.
+
+## Algoritmo y decisiones técnicas
+
+El algoritmo utiliza una variable estática llamada `stash` para conservar entre
+llamadas los caracteres que se han leído, pero que todavía no se han devuelto
+como parte de una línea.
+
+### Flujo de ejecución
+
+1. Se comprueban el descriptor `fd`, el valor de `BUFFER_SIZE` y la legibilidad
+   del descriptor mediante `read(fd, NULL, 0)`.
+2. Si `stash` ya contiene un salto de línea, no se realiza una nueva lectura.
+3. En caso contrario, `ft_read_and_save` lee bloques de hasta `BUFFER_SIZE`
+   bytes y los añade a `stash`.
+4. La lectura termina cuando se encuentra `\n`, se alcanza el final del archivo
+   o se produce un error.
+5. `ft_extract_line` crea una nueva cadena desde el principio de `stash` hasta
+   el primer `\n` incluido. Si no existe `\n`, copia hasta el final.
+6. `ft_clean_stash` elimina la línea que se va a devolver y conserva los
+   caracteres posteriores para la siguiente llamada.
+7. Se liberan las reservas que dejan de ser necesarias y se devuelve la línea.
+
+### Decisiones técnicas
+
+- Se utiliza `read(fd, NULL, 0)` para comprobar el descriptor sin consumir
+  datos del archivo.
+- `stash` es estático porque debe conservar su valor después de finalizar una
+  llamada a `get_next_line`.
+- No es necesario inicializar `stash` con una cadena vacía. Las funciones
+  auxiliares aceptan que inicialmente sea `NULL`.
+- `ft_append_buffer` concatena el contenido acumulado con el nuevo bloque y
+  libera el `stash` anterior.
+- `ft_extract_line` devuelve una reserva independiente para que el programa que
+  llama a `get_next_line` pueda liberarla.
+- `ft_clean_stash` conserva únicamente el contenido posterior a la línea
+  devuelta y libera el estado anterior.
+- La lectura se detiene en cuanto existe una línea completa, evitando leer todo
+  el archivo por adelantado.
+- Las funciones auxiliares se separan según su responsabilidad para facilitar
+  la lectura del código y el control de la memoria.
+- Las concatenaciones crean reservas nuevas porque `realloc` no está autorizado
+  por el subject. Esta solución es directa y fácil de comprobar, aunque puede
+  copiar varias veces el contenido acumulado cuando una línea es muy larga.
 
 ## Recursos
 

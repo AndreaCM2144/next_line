@@ -6,7 +6,7 @@
 /*   By: andrcarr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/01 18:40:03 by andrcarr          #+#    #+#             */
-/*   Updated: 2026/08/01 19:58:48 by andrcarr         ###   ########.fr       */
+/*   Updated: 2026/08/04 14:50:28 by andrcarr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ static char	*ft_read_and_save(int fd, char *stash)
 char	*ft_extract_line(char *stash)
 {
 	size_t	len;
+	char	*result;
 
 	if (!stash || !stash[0])
 		return (NULL);
@@ -59,7 +60,8 @@ char	*ft_extract_line(char *stash)
 		len++;
 	if (stash[len] == '\n')
 		len++;
-	return (ft_substr(stash, 0, len));
+	result = ft_substr(stash, 0, len);
+	return (result);
 }
 
 char	*ft_clean_stash(char *stash)
@@ -71,7 +73,10 @@ char	*ft_clean_stash(char *stash)
 	while (stash[start] && stash[start] != '\n')
 		start++;
 	if (!stash[start] || !stash[start + 1])
-		return (free(stash), NULL);
+	{
+		free(stash);
+		return (NULL);
+	}
 	new = ft_substr(stash, start + 1, ft_strlen(stash) - start - 1);
 	free(stash);
 	return (new);
@@ -83,13 +88,21 @@ char	*get_next_line(int fd)
 	char		*line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, NULL, 0) < 0)
-		return (free(stash), stash = NULL, NULL);
+	{
+		free(stash);
+		stash = NULL;
+		return (NULL);
+	}
 	stash = ft_read_and_save(fd, stash);
 	if (!stash)
 		return (NULL);
 	line = ft_extract_line(stash);
 	if (!line)
-		return (free(stash), stash = NULL, NULL);
+	{
+		free(stash);
+		stash = NULL;
+		return (NULL);
+	}
 	stash = ft_clean_stash(stash);
 	return (line);
 }
