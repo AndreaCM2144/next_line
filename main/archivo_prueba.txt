@@ -1,0 +1,10 @@
+Hola, esta es la primera linea.
+Esta es la segunda linea y es un poco mas larga.
+
+La linea anterior estaba vacia.
+1234567890
+Una linea con espacios entre palabras.
+Esta linea
+está divida
+en tres.
+Fin del archivo.
